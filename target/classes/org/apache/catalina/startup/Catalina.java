@@ -283,6 +283,11 @@ public class Catalina {
         digester.setUseContextClassLoader(true);
 
         // Configure the actions we will be using
+
+        /**
+         * 创建一个 Server 实例，入栈，Server 默认实现类为 StandardServer，也可以指定 className 属性设置
+         * 然后设置 Server 相关属性，并将其设置到 Catalina 对象中
+         */
         digester.addObjectCreate("Server",
                                  "org.apache.catalina.core.StandardServer",
                                  "className");
@@ -291,6 +296,10 @@ public class Catalina {
                             "setServer",
                             "org.apache.catalina.Server");
 
+
+        /**
+         * 创建全局JNDI，设置属性并将其设置到 Server 实例中
+         */
         digester.addObjectCreate("Server/GlobalNamingResources",
                                  "org.apache.catalina.deploy.NamingResourcesImpl");
         digester.addSetProperties("Server/GlobalNamingResources");
@@ -298,6 +307,10 @@ public class Catalina {
                             "setGlobalNamingResources",
                             "org.apache.catalina.deploy.NamingResourcesImpl");
 
+        /**
+         * 为 Server添加生命周期监听器
+         * catalina 默认有五个监听器
+         */
         digester.addObjectCreate("Server/Listener",
                                  null, // MUST be specified in the element
                                  "className");
@@ -306,6 +319,9 @@ public class Catalina {
                             "addLifecycleListener",
                             "org.apache.catalina.LifecycleListener");
 
+        /**
+         * 为 Server 添加 Service 实例，默认实现为 StandardService
+         */
         digester.addObjectCreate("Server/Service",
                                  "org.apache.catalina.core.StandardService",
                                  "className");
@@ -314,6 +330,10 @@ public class Catalina {
                             "addService",
                             "org.apache.catalina.Service");
 
+
+        /**
+         * 为 Service 添加生命周期监听器
+         */
         digester.addObjectCreate("Server/Service/Listener",
                                  null, // MUST be specified in the element
                                  "className");
@@ -323,6 +343,10 @@ public class Catalina {
                             "org.apache.catalina.LifecycleListener");
 
         //Executor
+        /**
+         * 为 Service Executor，默认实现为 StandardThreadExecutor
+         * Catalina 默认 Executor 共享级别为 Service
+         */
         digester.addObjectCreate("Server/Service/Executor",
                          "org.apache.catalina.core.StandardThreadExecutor",
                          "className");
@@ -333,6 +357,10 @@ public class Catalina {
                             "org.apache.catalina.Executor");
 
 
+        /**
+         * 为 Service 设置 Connector
+         * 排除 executor属性
+         */
         digester.addRule("Server/Service/Connector",
                          new ConnectorCreateRule());
         digester.addRule("Server/Service/Connector",
@@ -342,6 +370,9 @@ public class Catalina {
                             "org.apache.catalina.connector.Connector");
 
 
+        /**
+         * 为 Service 添加生命周期监听器
+         */
         digester.addObjectCreate("Server/Service/Connector/Listener",
                                  null, // MUST be specified in the element
                                  "className");
@@ -496,6 +527,7 @@ public class Catalina {
         initNaming();
 
         // Create and execute our Digester
+        //将 xml 配置转为 Java 对象，默认解析 conf/server.xml
         Digester digester = createStartDigester();
 
         InputSource inputSource = null;
@@ -637,6 +669,7 @@ public class Catalina {
         long t1 = System.nanoTime();
 
         // Start the new server
+        //1.调用Server的start()方法，启动Server组件
         try {
             getServer().start();
         } catch (LifecycleException e) {
@@ -655,6 +688,7 @@ public class Catalina {
         }
 
         // Register shutdown hook
+        //2.注册jvm关闭的钩子，关闭Server及其他组件
         if (useShutdownHook) {
             if (shutdownHook == null) {
                 shutdownHook = new CatalinaShutdownHook();
@@ -671,6 +705,7 @@ public class Catalina {
             }
         }
 
+        //阻塞监听端口关闭命令
         if (await) {
             await();
             stop();

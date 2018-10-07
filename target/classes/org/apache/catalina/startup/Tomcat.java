@@ -494,7 +494,7 @@ public class Tomcat {
      * Get the server object. You can add listeners and few more
      * customizations. JNDI is disabled by default.
      */
-    public Server getServer() {
+    public Server  getServer() {
 
         if (server != null) {
             return server;

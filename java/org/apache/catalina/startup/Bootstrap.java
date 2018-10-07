@@ -71,6 +71,14 @@ public final class Bootstrap {
 
         if (home != null) {
             File f = new File(home);
+
+            /**
+             * 当输入为绝对路径时，返回的都是绝对路径。
+             * 当输入为相对路径时：
+             * getPath()返回的是File构造方法里的路径，是什么就是什么，不增不减
+             * getAbsolutePath()返回的其实是user.dir+getPath()的内容
+             * getCanonicalPath()返回的就是标准的将符号完全解析的路径
+             */
             try {
                 homeFile = f.getCanonicalFile();
             } catch (IOException ioe) {
@@ -133,9 +141,9 @@ public final class Bootstrap {
     private Object catalinaDaemon = null;
 
 
-    ClassLoader commonLoader = null;
-    ClassLoader catalinaLoader = null;
-    ClassLoader sharedLoader = null;
+    ClassLoader commonLoader = null;    //默认指向 jre/lib 目录下的包
+    ClassLoader catalinaLoader = null;  //默认为空，此时使用 commonLoader 加载应用服务器
+    ClassLoader sharedLoader = null;    //默认为空
 
 
     // -------------------------------------------------------- Private Methods
@@ -143,13 +151,19 @@ public final class Bootstrap {
 
     private void initClassLoaders() {
         try {
+            //common-loader
             commonLoader = createClassLoader("common", null);
             if( commonLoader == null ) {
                 // no config file, default to this loader - we might be in a 'single' env.
                 commonLoader=this.getClass().getClassLoader();
             }
+
+            //server-loader
             catalinaLoader = createClassLoader("server", commonLoader);
+
+            //shared-loader
             sharedLoader = createClassLoader("shared", commonLoader);
+
         } catch (Throwable t) {
             handleThrowable(t);
             log.error("Class loader creation threw exception", t);
@@ -253,11 +267,18 @@ public final class Bootstrap {
      */
     public void init() throws Exception {
 
+        // 初始化 classLoader
         initClassLoaders();
 
+        //主线程的 classLoader
         Thread.currentThread().setContextClassLoader(catalinaLoader);
 
         SecurityClassLoad.securityClassLoad(catalinaLoader);
+
+        /**
+         * 通过反射获取 Catalina 对象，调用 setParentClassLoader() 方法，
+         * 将其父加载器设置成 sharedLoader，这里不直接设置而是通过反射是由于 Tomcat 的历史原因。
+         */
 
         // Load our startup class and call its process() method
         if (log.isDebugEnabled())
@@ -284,6 +305,7 @@ public final class Bootstrap {
 
     /**
      * Load daemon.
+     * //调用 Catalina 的 load() 方法
      */
     private void load(String[] arguments)
         throws Exception {

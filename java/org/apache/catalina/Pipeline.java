@@ -37,6 +37,11 @@ package org.apache.catalina;
  * @author Craig R. McClanahan
  * @author Peter Donald
  */
+
+
+/**
+ * 维护了一条Valve对象组成的链表，同时有一个特殊的Valve，那就是Basic
+ */
 public interface Pipeline {
 
 

@@ -177,4 +177,11 @@ public class TestBootstrap {
 
         Assert.assertArrayEquals(expected, result);
     }
+
+    @Test
+    public void testInit() {
+        System.out.println(System.getProperty("java.class.path"));
+
+        Bootstrap bootstrap = new Bootstrap();
+    }
 }

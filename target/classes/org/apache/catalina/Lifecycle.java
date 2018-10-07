@@ -80,6 +80,11 @@ package org.apache.catalina;
  *
  * @author Craig R. McClanahan
  */
+
+/**
+ * 定义了组件生命周期的一系列操作，一些状态常量，以及操作LifecycleListener的API
+ * 使用了观察者模式
+ */
 public interface Lifecycle {
 
 
